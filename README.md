@@ -36,7 +36,7 @@ A Power Apps Component Framework (PCF) control to display a randomly generated w
 3. Bind the control to a form or canvas app and configure its properties.
 
 ## Using a Weather API 
-I am still working on using a real weather API.
+The project has now been updated to use OpenWeatherMap API.
 
 ## License
 This project is licensed under the MIT License.
