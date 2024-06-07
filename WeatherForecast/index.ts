@@ -1,4 +1,5 @@
 import { IInputs, IOutputs } from "./generated/ManifestTypes";
+import axios from 'axios';
 
 interface IWeatherData {
     date: Date;
@@ -14,51 +15,76 @@ enum WeatherType {
     PARTLYCLOUDYDAY = 'PartlyCloudyDay',
 }
 
+// Define interfaces for the OpenWeatherMap API response
+interface IWeatherApiResponse {
+    list: IWeatherApiItem[];
+}
+
+interface IWeatherApiItem {
+    dt: number;
+    main: {
+        temp: number;
+    };
+    weather: {
+        main: string;
+    }[];
+}
+
 export class WeatherForecast implements ComponentFramework.StandardControl<IInputs, IOutputs> {
     private container: HTMLDivElement;
     private weatherData: IWeatherData[];
+    private apiKey: string = '8294ab245382114f46a37b3c31376d41'; // Replace with your OpenWeatherMap API Key
 
     constructor() {
-        this.weatherData = this.generateWeatherData();
+        this.weatherData = [];
     }
 
-    public init(
+    public async init(
         context: ComponentFramework.Context<IInputs>,
         notifyOutputChanged: () => void,
         state: ComponentFramework.Dictionary,
         container: HTMLDivElement
-    ): void {
+    ): Promise<void> {
         this.container = container;
+        await this.fetchWeatherData();
         this.renderControl();
     }
 
-    private generateWeatherData(): IWeatherData[] {
-        const startDate = new Date();
-        const weatherData: IWeatherData[] = [];
-        for (let i = 0; i < 5; i++) {
-            const date = new Date();
-            date.setDate(startDate.getDate() + i);
-            const temperature = Math.floor(Math.random() * 51) - 25;
-            let weatherType: WeatherType = WeatherType.SUNNY;
+    private async fetchWeatherData(): Promise<void> {
+        const city = 'London'; // Replace with the city you want to fetch weather for
+        const apiUrl = `https://api.openweathermap.org/data/2.5/forecast?q=${city}&units=metric&cnt=5&appid=${this.apiKey}`;
 
-            if (temperature <= -5)
-                weatherType = WeatherType.SNOW;
-            else if (temperature >= -5 && temperature <= 5)
-                weatherType = WeatherType.RAINSNOW;
-            else if (temperature >= 5 && temperature <= 10)
-                weatherType = WeatherType.CLOUDY;
-            else if (temperature >= 10 && temperature <= 20)
-                weatherType = WeatherType.PARTLYCLOUDYDAY;
-            else if (temperature >= 20)
-                weatherType = WeatherType.SUNNY;
+        try {
+            const response = await axios.get<IWeatherApiResponse>(apiUrl);
+            const data = response.data.list;
 
-            weatherData.push({
-                date: date,
-                temperature: temperature,
-                weatherType: weatherType
+            this.weatherData = data.map((item: IWeatherApiItem) => {
+                const date = new Date(item.dt * 1000);
+                const temperature = item.main.temp;
+                const weatherType = this.getWeatherType(item.weather[0].main);
+
+                return {
+                    date: date,
+                    temperature: Math.round(temperature),
+                    weatherType: weatherType
+                };
             });
+
+        } catch (error) {
+            console.error('Error fetching weather data:', error);
         }
-        return weatherData;
+    }
+
+    private getWeatherType(weather: string): WeatherType {
+        switch (weather) {
+            case 'Clouds': return WeatherType.CLOUDY;
+            case 'Clear': return WeatherType.SUNNY;
+            case 'Snow': return WeatherType.SNOW;
+            case 'Rain': return WeatherType.RAINSNOW;
+            case 'Drizzle': return WeatherType.RAINSNOW;
+            case 'Thunderstorm': return WeatherType.RAINSNOW;
+            default: return WeatherType.PARTLYCLOUDYDAY;
+        }
     }
 
     private renderControl(): void {
@@ -86,5 +112,3 @@ export class WeatherForecast implements ComponentFramework.StandardControl<IInpu
         // Cleanup if necessary
     }
 }
-
-

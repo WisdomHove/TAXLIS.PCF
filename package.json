@@ -13,6 +13,8 @@
     "refreshTypes": "pcf-scripts refreshTypes"
   },
   "dependencies": {
+    "axios": "^1.7.2",
+    "dotenv": "^16.4.5"
   },
   "devDependencies": {
     "@microsoft/eslint-plugin-power-apps": "^0.2.33",

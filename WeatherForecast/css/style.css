@@ -1,23 +1,37 @@
-/* style.css */
 .weather-forecast-app {
     display: flex;
     justify-content: space-around;
+    background-color: #f0f0f0; /* Light grey background for the whole app */
+    border-radius: 15px; /* Rounded corners for the app */
+    overflow: hidden; /* Ensures the app corners are rounded */
 }
 
 .weather-day {
     border: 1px solid #ccc;
-    padding: 10px;
+    padding: 20px; /* Increased padding for more space */
     text-align: center;
+    background-color: #fff; /* White background for each day */
+    margin: 10px; /* Space between each day */
+    box-shadow: 0 0 10px rgba(0,0,0,0.1); /* Subtle shadow for 3D effect */
+    transition: transform 0.1s ease-in-out; /* Transition for hover effect */
+}
+
+.weather-day:hover {
+    transform: scale(1.05); /* Slightly enlarge a day box when hovered */
 }
 
 .weather-icon {
-    font-size: 24px;
+    font-size: 30px; /* Larger icon */
+    margin-bottom: 10px; /* Space between icon and temperature */
 }
 
 .temperature {
-    font-size: 20px;
+    font-size: 26px; /* Larger temperature */
+    font-weight: bold; /* Bold temperature */
+    margin-bottom: 10px; /* Space between temperature and weather type */
 }
 
 .weather-type {
-    font-size: 16px;
+    font-size: 18px; /* Larger weather type */
+    text-transform: uppercase; /* Weather type in uppercase */
 }
