@@ -1,0 +1,23 @@
+/* style.css */
+.weather-forecast-app {
+    display: flex;
+    justify-content: space-around;
+}
+
+.weather-day {
+    border: 1px solid #ccc;
+    padding: 10px;
+    text-align: center;
+}
+
+.weather-icon {
+    font-size: 24px;
+}
+
+.temperature {
+    font-size: 20px;
+}
+
+.weather-type {
+    font-size: 16px;
+}
