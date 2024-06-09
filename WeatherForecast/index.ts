@@ -15,7 +15,6 @@ enum WeatherType {
     PARTLYCLOUDYDAY = 'PartlyCloudyDay',
 }
 
-// Define interfaces for the OpenWeatherMap API response
 interface IWeatherApiResponse {
     list: IWeatherApiItem[];
 }
@@ -33,7 +32,9 @@ interface IWeatherApiItem {
 export class WeatherForecast implements ComponentFramework.StandardControl<IInputs, IOutputs> {
     private container: HTMLDivElement;
     private weatherData: IWeatherData[];
-    private apiKey: string = '8294ab245382114f46a37b3c31376d41'; // Replace with your OpenWeatherMap API Key
+    // Moved city to a class property for better encapsulation and easy modification
+    private readonly city: string = 'London'; 
+    private readonly apiKey: string = '8294ab245382114f46a37b3c31376d41'; 
 
     constructor() {
         this.weatherData = [];
@@ -46,42 +47,46 @@ export class WeatherForecast implements ComponentFramework.StandardControl<IInpu
         container: HTMLDivElement
     ): Promise<void> {
         this.container = container;
-        await this.fetchWeatherData();
+        await this.fetchAndTransformWeatherData();
         this.renderControl();
     }
 
-    private async fetchWeatherData(): Promise<void> {
-        const city = 'London'; // Replace with the city you want to fetch weather for
-        const apiUrl = `https://api.openweathermap.org/data/2.5/forecast?q=${city}&units=metric&cnt=5&appid=${this.apiKey}`;
+    // Separated fetching and transforming data into its own method for better readability and separation of concerns
+    private async fetchAndTransformWeatherData(): Promise<void> {
+        const apiUrl = `https://api.openweathermap.org/data/2.5/forecast?q=${this.city}&units=metric&cnt=5&appid=${this.apiKey}`;
 
         try {
             const response = await axios.get<IWeatherApiResponse>(apiUrl);
             const data = response.data.list;
 
-            this.weatherData = data.map((item: IWeatherApiItem) => {
-                const date = new Date(item.dt * 1000);
-                const temperature = item.main.temp;
-                const weatherType = this.getWeatherType(item.weather[0].main);
-
-                return {
-                    date: date,
-                    temperature: Math.round(temperature),
-                    weatherType: weatherType
-                };
-            });
+            this.weatherData = data.map((item: IWeatherApiItem) => this.transformWeatherData(item));
 
         } catch (error) {
             console.error('Error fetching weather data:', error);
         }
     }
 
+    // Created a new method to transform weather data, improving readability and separation of concerns
+    private transformWeatherData(item: IWeatherApiItem): IWeatherData {
+        const date = new Date(item.dt * 1000);
+        const temperature = item.main.temp;
+        const weatherType = this.getWeatherType(item.weather[0].main);
+
+        return {
+            date: date,
+            temperature: Math.round(temperature),
+            weatherType: weatherType
+        };
+    }
+
+    // Simplified the getWeatherType method by combining the cases for 'Rain', 'Drizzle', and 'Thunderstorm' into one line
     private getWeatherType(weather: string): WeatherType {
         switch (weather) {
             case 'Clouds': return WeatherType.CLOUDY;
             case 'Clear': return WeatherType.SUNNY;
             case 'Snow': return WeatherType.SNOW;
-            case 'Rain': return WeatherType.RAINSNOW;
-            case 'Drizzle': return WeatherType.RAINSNOW;
+            case 'Rain': 
+            case 'Drizzle': 
             case 'Thunderstorm': return WeatherType.RAINSNOW;
             default: return WeatherType.PARTLYCLOUDYDAY;
         }
@@ -89,15 +94,20 @@ export class WeatherForecast implements ComponentFramework.StandardControl<IInpu
 
     private renderControl(): void {
         this.container.innerHTML = `<div class="weather-forecast-app">
-            ${this.weatherData.map(data => `
-                <div class="weather-day">
-                    <h3>${data.date.toDateString()}</h3>
-                    <div class="weather-icon">${data.weatherType}</div>
-                    <div class="temperature">${data.temperature}°C</div>
-                    <div class="weather-type">${data.weatherType}</div>
-                </div>
-            `).join('')}
+            ${this.weatherData.map(data => this.createWeatherDayHtml(data)).join('')}
         </div>`;
+    }
+
+    // Created a new method to generate the HTML for a single day, separating the concerns of data transformation and HTML generation
+    private createWeatherDayHtml(data: IWeatherData): string {
+        return `
+            <div class="weather-day">
+                <h3>${data.date.toDateString()}</h3>
+                <div class="weather-icon">${data.weatherType}</div>
+                <div class="temperature">${data.temperature}°C</div>
+                <div class="weather-type">${data.weatherType}</div>
+            </div>
+        `;
     }
 
     public updateView(context: ComponentFramework.Context<IInputs>): void {
