@@ -32,8 +32,8 @@ interface IWeatherApiItem {
 export class WeatherForecast implements ComponentFramework.StandardControl<IInputs, IOutputs> {
     private container: HTMLDivElement;
     private weatherData: IWeatherData[];
-    private city: string; // Removed the default value to allow for user input
-    private readonly apiKey: string = '8294ab245382114f46a37b3c31376d41'; 
+    private city: string;
+    private readonly apiKey: string = '8294ab245382114f46a37b3c31376d41';
 
     constructor() {
         this.weatherData = [];
@@ -46,19 +46,22 @@ export class WeatherForecast implements ComponentFramework.StandardControl<IInpu
         container: HTMLDivElement
     ): Promise<void> {
         this.container = container;
-        this.city = context.parameters.city.raw || 'London'; // Fallback to 'London' if no city is provided
+        this.city = context.parameters.city.raw || 'London';
         await this.fetchAndTransformWeatherData();
         this.renderControl();
     }
 
     private async fetchAndTransformWeatherData(): Promise<void> {
-        const apiUrl = `https://api.openweathermap.org/data/2.5/forecast?q=${this.city}&units=metric&cnt=5&appid=${this.apiKey}`;
+        const apiUrl = `https://api.openweathermap.org/data/2.5/forecast?q=${this.city}&units=metric&cnt=40&appid=${this.apiKey}`;
 
         try {
             const response = await axios.get<IWeatherApiResponse>(apiUrl);
             const data = response.data.list;
 
-            this.weatherData = data.map((item: IWeatherApiItem) => this.transformWeatherData(item));
+            // Filter the data to get one entry per day (approx every 24 hours)
+            const dailyData = data.filter((item, index) => index % 8 === 0).slice(0, 5);
+
+            this.weatherData = dailyData.map((item: IWeatherApiItem) => this.transformWeatherData(item));
 
         } catch (error) {
             console.error('Error fetching weather data:', error);
