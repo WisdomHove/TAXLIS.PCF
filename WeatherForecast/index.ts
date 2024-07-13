@@ -32,8 +32,7 @@ interface IWeatherApiItem {
 export class WeatherForecast implements ComponentFramework.StandardControl<IInputs, IOutputs> {
     private container: HTMLDivElement;
     private weatherData: IWeatherData[];
-    // Moved city to a class property for better encapsulation and easy modification
-    private readonly city: string = 'London'; 
+    private city: string; // Removed the default value to allow for user input
     private readonly apiKey: string = '8294ab245382114f46a37b3c31376d41'; 
 
     constructor() {
@@ -47,11 +46,11 @@ export class WeatherForecast implements ComponentFramework.StandardControl<IInpu
         container: HTMLDivElement
     ): Promise<void> {
         this.container = container;
+        this.city = context.parameters.city.raw || 'London'; // Fallback to 'London' if no city is provided
         await this.fetchAndTransformWeatherData();
         this.renderControl();
     }
 
-    // Separated fetching and transforming data into its own method for better readability and separation of concerns
     private async fetchAndTransformWeatherData(): Promise<void> {
         const apiUrl = `https://api.openweathermap.org/data/2.5/forecast?q=${this.city}&units=metric&cnt=5&appid=${this.apiKey}`;
 
@@ -66,7 +65,6 @@ export class WeatherForecast implements ComponentFramework.StandardControl<IInpu
         }
     }
 
-    // Created a new method to transform weather data, improving readability and separation of concerns
     private transformWeatherData(item: IWeatherApiItem): IWeatherData {
         const date = new Date(item.dt * 1000);
         const temperature = item.main.temp;
@@ -79,7 +77,6 @@ export class WeatherForecast implements ComponentFramework.StandardControl<IInpu
         };
     }
 
-    // Simplified the getWeatherType method by combining the cases for 'Rain', 'Drizzle', and 'Thunderstorm' into one line
     private getWeatherType(weather: string): WeatherType {
         switch (weather) {
             case 'Clouds': return WeatherType.CLOUDY;
@@ -98,7 +95,6 @@ export class WeatherForecast implements ComponentFramework.StandardControl<IInpu
         </div>`;
     }
 
-    // Created a new method to generate the HTML for a single day, separating the concerns of data transformation and HTML generation
     private createWeatherDayHtml(data: IWeatherData): string {
         return `
             <div class="weather-day">
@@ -111,7 +107,11 @@ export class WeatherForecast implements ComponentFramework.StandardControl<IInpu
     }
 
     public updateView(context: ComponentFramework.Context<IInputs>): void {
-        // Not implemented
+        const newCity = context.parameters.city.raw;
+        if (newCity && newCity !== this.city) {
+            this.city = newCity;
+            this.fetchAndTransformWeatherData().then(() => this.renderControl());
+        }
     }
 
     public getOutputs(): IOutputs {
