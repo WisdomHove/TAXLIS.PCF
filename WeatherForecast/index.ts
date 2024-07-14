@@ -33,7 +33,8 @@ export class WeatherForecast implements ComponentFramework.StandardControl<IInpu
     private container: HTMLDivElement;
     private weatherData: IWeatherData[];
     private city: string;
-    private readonly apiKey: string = '8294ab245382114f46a37b3c31376d41';
+    // Removed the hardcoded API key and added a new API endpoint
+    private readonly apiEndpoint: string = 'https://myweatherproxyapp.azurewebsites.net/weather';
 
     constructor() {
         this.weatherData = [];
@@ -52,7 +53,7 @@ export class WeatherForecast implements ComponentFramework.StandardControl<IInpu
     }
 
     private async fetchAndTransformWeatherData(): Promise<void> {
-        const apiUrl = `https://api.openweathermap.org/data/2.5/forecast?q=${this.city}&units=metric&cnt=40&appid=${this.apiKey}`;
+        const apiUrl = `${this.apiEndpoint}?city=${this.city}`;
 
         try {
             const response = await axios.get<IWeatherApiResponse>(apiUrl);
